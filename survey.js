@@ -4,6 +4,14 @@
   const form = document.getElementById('opportunity-survey');
   if (!form) return;
 
+  // Load survey-only viewport refinements without affecting the static pages.
+  if (!document.querySelector('link[href="/survey-ux.css"]')) {
+    const uxStyles = document.createElement('link');
+    uxStyles.rel = 'stylesheet';
+    uxStyles.href = '/survey-ux.css';
+    document.head.appendChild(uxStyles);
+  }
+
   const steps = Array.from(form.querySelectorAll('.survey-step'));
   const nextButton = document.getElementById('next-button');
   const backButton = document.getElementById('back-button');
@@ -16,6 +24,8 @@
   const feedback = document.getElementById('open_feedback');
   const characterCount = document.getElementById('character-count');
   const contactConsent = document.getElementById('contact_consent');
+  const siteHeader = document.querySelector('.site-header');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let currentStep = 0;
 
   const params = new URLSearchParams(window.location.search);
@@ -64,6 +74,39 @@
     if (first) first.focus({ preventScroll: true });
   }
 
+  function positionSurveyCard(activeStep, heading) {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const headerHeight = siteHeader ? siteHeader.getBoundingClientRect().height : 0;
+        const viewportGap = window.innerWidth <= 760 ? 10 : 18;
+        const availableHeight = Math.max(320, window.innerHeight - headerHeight - (viewportGap * 2));
+        const cardRect = form.getBoundingClientRect();
+        const cardTop = window.scrollY + cardRect.top;
+        const cardHeight = form.offsetHeight;
+
+        let targetTop = cardTop - headerHeight - viewportGap;
+
+        // When the full active card fits, center it in the usable viewport.
+        // Longer questions align at the top so respondents see the prompt first.
+        if (cardHeight < availableHeight) {
+          targetTop -= (availableHeight - cardHeight) / 2;
+        }
+
+        window.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: reduceMotion.matches ? 'auto' : 'smooth'
+        });
+
+        if (heading) {
+          heading.setAttribute('tabindex', '-1');
+          heading.focus({ preventScroll: true });
+        } else {
+          focusFirstOption(activeStep);
+        }
+      });
+    });
+  }
+
   function updateStep(shouldScroll = true) {
     steps.forEach((step, index) => step.classList.toggle('is-active', index === currentStep));
 
@@ -83,17 +126,14 @@
 
     const activeStep = steps[currentStep];
     const heading = activeStep.querySelector('legend, h3');
-    window.requestAnimationFrame(() => {
-      activeStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      if (heading) {
-        heading.setAttribute('tabindex', '-1');
-        heading.focus({ preventScroll: true });
-      }
-    });
+    positionSurveyCard(activeStep, heading);
   }
 
   nextButton.addEventListener('click', () => {
-    if (!validateStep(steps[currentStep])) return;
+    if (!validateStep(steps[currentStep])) {
+      positionSurveyCard(steps[currentStep], steps[currentStep].querySelector('legend, h3'));
+      return;
+    }
     if (currentStep < steps.length - 1) {
       currentStep += 1;
       updateStep();
@@ -228,8 +268,6 @@
         throw new Error(result.message || 'We could not save your response. Please try again.');
       }
 
-      // Use the physical file path so a successful submission never depends
-      // on Netlify's extensionless redirect rules being active.
       window.location.assign('/thank-you.html');
     } catch (error) {
       submitButton.disabled = false;
