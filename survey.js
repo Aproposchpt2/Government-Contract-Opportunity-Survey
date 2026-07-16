@@ -228,7 +228,9 @@
         throw new Error(result.message || 'We could not save your response. Please try again.');
       }
 
-      window.location.assign('/thank-you');
+      // Use the physical file path so a successful submission never depends
+      // on Netlify's extensionless redirect rules being active.
+      window.location.assign('/thank-you.html');
     } catch (error) {
       submitButton.disabled = false;
       submitButton.textContent = 'Submit My Response';
