@@ -142,12 +142,34 @@
     updateCount();
   }
 
-  form.addEventListener('submit', event => {
+  function formToPayload() {
+    const payload = {};
+    const formData = new FormData(form);
+
+    for (const [rawName, rawValue] of formData.entries()) {
+      if (rawName === 'form-name' || rawName === 'submitted_at') continue;
+
+      const isArray = rawName.endsWith('[]');
+      const name = isArray ? rawName.slice(0, -2) : rawName;
+      const value = typeof rawValue === 'string' ? rawValue : rawValue.name;
+
+      if (isArray) {
+        if (!Array.isArray(payload[name])) payload[name] = [];
+        payload[name].push(value);
+      } else {
+        payload[name] = value;
+      }
+    }
+
+    return payload;
+  }
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
     setMessage();
 
     for (let index = 0; index < 9; index += 1) {
       if (!validateStep(steps[index])) {
-        event.preventDefault();
         currentStep = index;
         updateStep();
         return;
@@ -162,7 +184,6 @@
     const hasFollowUpRequest = followUpBoxes.some(box => box.checked && box.value !== 'No follow-up requested');
 
     if ((hasContactDetails || hasFollowUpRequest) && !contactConsent.checked) {
-      event.preventDefault();
       setMessage('Please authorize contact before submitting contact information or requesting follow-up. You may also remove the contact details and submit anonymously.');
       contactConsent.focus();
       return;
@@ -170,7 +191,6 @@
 
     const email = form.elements.namedItem('email');
     if (email instanceof HTMLInputElement && email.value && !email.checkValidity()) {
-      event.preventDefault();
       setMessage('Please enter a valid email address or leave the email field blank.');
       email.focus();
       return;
@@ -178,7 +198,6 @@
 
     const website = form.elements.namedItem('website');
     if (website instanceof HTMLInputElement && website.value && !website.checkValidity()) {
-      event.preventDefault();
       setMessage('Please enter a complete website address beginning with http:// or https://, or leave it blank.');
       website.focus();
       return;
@@ -187,6 +206,34 @@
     document.getElementById('submitted_at').value = new Date().toISOString();
     submitButton.disabled = true;
     submitButton.textContent = 'Submitting…';
+
+    try {
+      const response = await fetch('/.netlify/functions/submit-survey', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(formToPayload())
+      });
+
+      let result = {};
+      try {
+        result = await response.json();
+      } catch {
+        result = {};
+      }
+
+      if (!response.ok || result.ok !== true) {
+        throw new Error(result.message || 'We could not save your response. Please try again.');
+      }
+
+      window.location.assign('/thank-you');
+    } catch (error) {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Submit My Response';
+      setMessage(error instanceof Error ? error.message : 'We could not save your response. Please try again.');
+    }
   });
 
   updateStep(false);
