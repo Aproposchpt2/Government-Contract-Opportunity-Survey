@@ -64,7 +64,7 @@
     if (first) first.focus({ preventScroll: true });
   }
 
-  function updateStep() {
+  function updateStep(shouldScroll = true) {
     steps.forEach((step, index) => step.classList.toggle('is-active', index === currentStep));
 
     const isFollowUp = currentStep === 9;
@@ -78,6 +78,8 @@
     nextButton.hidden = isFollowUp;
     submitButton.hidden = !isFollowUp;
     setMessage();
+
+    if (!shouldScroll) return;
 
     const activeStep = steps[currentStep];
     const heading = activeStep.querySelector('legend, h3');
@@ -187,5 +189,5 @@
     submitButton.textContent = 'Submitting…';
   });
 
-  updateStep();
+  updateStep(false);
 })();
