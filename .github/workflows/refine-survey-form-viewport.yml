@@ -1,0 +1,126 @@
+name: Refine survey form viewport
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refine-survey-form-viewport.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move heading into form and refine sizing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          page = Path('index.html')
+          html = page.read_text(encoding='utf-8')
+
+          old = '''      <div class="section-heading">
+        <p class="eyebrow dark">Share Your Experience</p>
+        <h2 id="survey-title">Government Contract Opportunity Survey</h2>
+        <p>Choose the answer that best reflects your experience. Required questions are marked with an asterisk.</p>
+      </div>
+
+      <form class="survey-card" id="opportunity-survey" name="government-contract-opportunity-survey" method="POST" action="/thank-you" data-netlify="true" netlify-honeypot="bot-field" novalidate>'''
+
+          new = '''      <form class="survey-card" id="opportunity-survey" name="government-contract-opportunity-survey" method="POST" action="/thank-you" data-netlify="true" netlify-honeypot="bot-field" novalidate>
+        <div class="section-heading survey-card-heading">
+          <p class="eyebrow dark">Share Your Experience</p>
+          <h2 id="survey-title">Government Contract Opportunity Survey</h2>
+          <p>Choose the answer that best reflects your experience. Required questions are marked with an asterisk.</p>
+        </div>'''
+
+          if 'survey-card-heading' not in html:
+              if old not in html:
+                  raise SystemExit('Expected survey heading/form structure not found')
+              html = html.replace(old, new, 1)
+              page.write_text(html, encoding='utf-8')
+
+          ux = Path('survey-ux.css')
+          css = ux.read_text(encoding='utf-8')
+          marker = '/* Premium survey viewport refinement v2 */'
+          addition = r'''
+
+/* Premium survey viewport refinement v2 */
+.survey-section {
+  padding: clamp(3rem, 6vw, 5rem) 1rem;
+}
+
+.survey-card {
+  width: min(920px, 100%);
+  min-height: 0;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+}
+
+.survey-card-heading {
+  width: min(760px, 100%);
+  margin: 0 auto 1.35rem;
+}
+
+.survey-card-heading .eyebrow {
+  margin-bottom: .55rem;
+}
+
+.survey-card-heading h2 {
+  font-size: clamp(1.8rem, 3.4vw, 2.9rem);
+}
+
+.survey-card-heading > p:last-child {
+  max-width: 680px;
+  margin: .65rem auto 0;
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+.progress-area {
+  margin-bottom: 1.45rem;
+}
+
+@media (min-width: 761px) {
+  .survey-card {
+    min-height: min(560px, calc(100svh - 108px));
+  }
+}
+
+@media (max-width: 760px) {
+  .survey-section {
+    padding-top: 2.25rem;
+    padding-bottom: 3.25rem;
+  }
+
+  .survey-card-heading {
+    margin-bottom: 1.1rem;
+  }
+
+  .survey-card-heading h2 {
+    font-size: clamp(1.65rem, 8vw, 2.15rem);
+  }
+
+  .survey-card-heading > p:last-child {
+    font-size: .86rem;
+  }
+}
+'''
+          if marker not in css:
+              ux.write_text(css.rstrip() + addition + '\n', encoding='utf-8')
+
+          Path('.github/workflows/refine-survey-form-viewport.yml').unlink()
+          PY
+
+      - name: Commit survey viewport refinement
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html survey-ux.css .github/workflows/refine-survey-form-viewport.yml
+          git commit -m 'Integrate survey heading and refine form viewport sizing'
+          git push
