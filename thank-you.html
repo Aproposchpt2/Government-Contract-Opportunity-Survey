@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Thank you for participating in the Government Contract Opportunity Survey.">
+  <meta name="theme-color" content="#07142b">
+  <title>Thank You | Government Contract Opportunity Survey</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="simple-page">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Government Contract Opportunity Survey home">
+      <span class="brand-mark" aria-hidden="true">GC</span>
+      <span>
+        <strong>Government Contract</strong>
+        <small>Opportunity Survey</small>
+      </span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="/#about">About</a>
+      <a href="/privacy">Privacy</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="simple-hero">
+      <p class="eyebrow">Government Contract Opportunity Survey</p>
+      <h1>Thank You for Your Participation</h1>
+      <p>Your answers will add to our mission to provide opportunity to communities.</p>
+    </section>
+
+    <section class="content-card thank-you-card" aria-labelledby="purpose-title">
+      <h2 id="purpose-title">Your Experience Adds Meaning to This Research</h2>
+      <p>Your response has been received. Thank you for contributing your experience, perspective, and voice to this important research.</p>
+
+      <div class="mission-copy">
+        <p>Apropos Group LLC is committed to supporting economic growth by helping businesses participate more effectively in the government marketplace.</p>
+        <p>When government contracts are fulfilled by qualified businesses, those businesses have an opportunity to grow, strengthen their capabilities, create jobs, and contribute to the economic vitality of the communities they serve.</p>
+        <p>When people gain access to meaningful employment, greater financial stability, and new opportunities for advancement, families become stronger and communities become more resilient.</p>
+        <p>Businesses grow. People prosper. Communities become stronger.</p>
+      </div>
+
+      <p>Your participation will help us better understand how businesses can gain greater access to government opportunities and participate more effectively in the public marketplace.</p>
+
+      <div class="share-actions">
+        <button class="button button-primary" id="share-button" type="button">Share the Survey</button>
+        <a class="button button-secondary" href="/">Return to Survey Home</a>
+      </div>
+      <p class="share-status" id="share-status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>Government Contract Opportunity Survey</strong></p>
+    <p>Independent market research conducted by Apropos Group LLC.</p>
+    <p>© 2026 Apropos Group LLC. All rights reserved.</p>
+    <p class="footer-links"><a href="/#about">About</a><a href="/privacy">Privacy</a></p>
+  </footer>
+
+  <script>
+    (() => {
+      const button = document.getElementById('share-button');
+      const status = document.getElementById('share-status');
+      const surveyUrl = `${window.location.origin}/`;
+      const shareData = {
+        title: 'Government Contract Opportunity Survey',
+        text: 'Help us understand what businesses need to compete for government contracts.',
+        url: surveyUrl
+      };
+
+      button.addEventListener('click', async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share(shareData);
+            status.textContent = 'Thank you for sharing the survey.';
+            return;
+          }
+          await navigator.clipboard.writeText(surveyUrl);
+          status.textContent = 'Survey link copied to your clipboard.';
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+          status.textContent = `Please copy and share this address: ${surveyUrl}`;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
