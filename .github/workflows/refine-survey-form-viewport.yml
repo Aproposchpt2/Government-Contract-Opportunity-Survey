@@ -124,3 +124,5 @@ jobs:
           git add index.html survey-ux.css .github/workflows/refine-survey-form-viewport.yml
           git commit -m 'Integrate survey heading and refine form viewport sizing'
           git push
+
+# Triggered after workflow registration.
