@@ -70,12 +70,17 @@ exports.handler = async function handler(event) {
     });
   }
 
-  const supabaseUrl = (Netlify.env.get('SUPABASE_URL') || '').replace(/\/$/, '');
-  const serviceRoleKey = Netlify.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-  const dashboardAccessKey = Netlify.env.get('DASHBOARD_ACCESS_KEY') || '';
+  // Use process.env for compatibility with standard Netlify Functions.
+  const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const dashboardAccessKey = process.env.DASHBOARD_ACCESS_KEY || '';
 
   if (!supabaseUrl || !serviceRoleKey || !dashboardAccessKey) {
-    console.error('Survey dashboard environment variables are missing.');
+    console.error('Survey dashboard environment variables are missing.', {
+      hasSupabaseUrl: Boolean(supabaseUrl),
+      hasServiceRoleKey: Boolean(serviceRoleKey),
+      hasDashboardAccessKey: Boolean(dashboardAccessKey)
+    });
     return jsonResponse(503, {
       ok: false,
       message: 'Dashboard service is not configured.'
